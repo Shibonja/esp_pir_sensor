@@ -10,8 +10,8 @@ const int timeZone = 1;     // Central European Time
 
 #define INPUT_PIN 12
 
-const char* ssid     = "Garaza";
-const char* password = "nemainterneta";
+const char* ssid     = "SSID";
+const char* password = "WIFI password";
 
 
 /* Configure data for UDP packets */
@@ -25,17 +25,16 @@ WiFiClient client;                              // Use WiFiClient class to creat
 
 /*  GadgetKeeper Credentials                                                                    *
  *  To obtain the Thing Id, see instructions http://docs.gadgetkeeper.com/display/docs/Thing+Id */
-String thing_ID = "d5b7ff9c6c3511e5accf2f3e5a24aa78";
+String thing_ID = "Thing_Id";
 
 /*  To obtain the Event Id see instructions http://wiki.gadgetkeeper.com/display/docs/Event+Id  */
-String event_ID ="b34679d36cec11e5accf2f3e5a24aa78";
+String event_ID ="Event_Id";
 
 /*  To obtain the API Key see instructions http://docs.gadgetkeeper.com/display/docs/API+Keys */
-String api_key = "7f213b0a04434cf788e30d8ee16f0534";
+String api_key = "API_Key";
 
 const char* host = "api.gadgetkeeper.com";
 
-//String property_url = "/v1/things/" + thing_ID + "/properties/" + property_ID + "value.json";
 String event_url = "/v1/things/" + thing_ID + "/events/" + event_ID + "/datapoints.json";
 
 
