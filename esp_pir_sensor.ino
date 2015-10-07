@@ -2,38 +2,37 @@
 #include <WiFiUdp.h>
 
 #define INPUT_PIN 12
-#define THING_ID "d5b7ff9c6c3511e5accf2f3e5a24aa78"
 
 const char* ssid     = "Garaza";
 const char* password = "nemainterneta";
 
-unsigned int localPort = 2390;      // local port to listen for UDP packets
 
-/* Don't hardwire the IP address or we won't get the benefits of the pool.
- *  Lookup the IP address for the host name instead */
-//IPAddress timeServer(129, 6, 15, 28); // time.nist.gov NTP server
-IPAddress timeServerIP; // time.nist.gov NTP server address
+/* Configure data for UDP packets */
+IPAddress timeServerIP;                         // time.nist.gov NTP server address
+unsigned int localPort = 2390;                  // local port to listen for UDP packets
 const char* ntpServerName = "time.nist.gov";
+const int NTP_PACKET_SIZE = 48;                 // NTP time stamp is in the first 48 bytes of the message
+byte packetBuffer[ NTP_PACKET_SIZE];            // buffer to hold incoming and outgoing UDP packets
+WiFiUDP udp;                                    // A UDP instance to let us send and receive packets over UDP
 
-const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
+WiFiClient client;                              // Use WiFiClient class to create TCP connections
 
-byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
-
-// A UDP instance to let us send and receive packets over UDP
-WiFiUDP udp;
-WiFiClient client;
-
-/*  url_GK syntax is "http://api.gadgetkeeper.com/v1/things/<THING_ID>/properties/<PROPERTY_ID>/value.json"
-    to obtain THING_ID see instructions here: http://docs.gadgetkeeper.com/display/docs/Thing+Id
-    to obtain PROPERTY_ID see instructions here: http://docs.gadgetkeeper.com/display/docs/Property+Id    */
-const char* url_GK = "/v1/things/d5b7ff9c6c3511e5accf2f3e5a24aa78/properties/f64c25bf6c3511e5accf2f3e5a24aa78/value.json";
-/*  instruction on how to create api key can be found here: http://docs.gadgetkeeper.com/display/docs/API+Keys */
-//const char* event_url = "/v1/things/d5b7ff9c6c3511e5accf2f3e5a24aa78/events/b34679d36cec11e5accf2f3e5a24aa78/datapoints.json";
+/*  GadgetKeeper Credentials                                                                    *
+ *  To obtain the Thing Id, see instructions http://docs.gadgetkeeper.com/display/docs/Thing+Id */
 String thing_ID = "d5b7ff9c6c3511e5accf2f3e5a24aa78";
-const char* property_ID = "f64c25bf6c3511e5accf2f3e5a24aa78";
+
+/*  To obtain the Property Id see instructions http://docs.gadgetkeeper.com/display/docs/Property+Id */
+String property_ID = "f64c25bf6c3511e5accf2f3e5a24aa78";
+
+/*  To obtain the Event Id see instructions http://wiki.gadgetkeeper.com/display/docs/Event+Id  */
 String event_ID ="b34679d36cec11e5accf2f3e5a24aa78";
-const char* api_key = "7f213b0a04434cf788e30d8ee16f0534";
+
+/*  To obtain the API Key see instructions http://docs.gadgetkeeper.com/display/docs/API+Keys */
+String api_key = "7f213b0a04434cf788e30d8ee16f0534";
+
 const char* host = "api.gadgetkeeper.com";
+
+//String property_url = "/v1/things/" + thing_ID + "/properties/" + property_ID + "value.json";
 String event_url = "/v1/things/" + thing_ID + "/events/" + event_ID + "/datapoints.json";
 
 
@@ -42,8 +41,8 @@ void setup() {
   pinMode(INPUT_PIN, INPUT);
   delay(10);
 
+  
   // We start by connecting to a WiFi network
-
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
@@ -75,13 +74,13 @@ void loop() {
     Serial.println("motion detected!");
     //sendMotionData();
     motionTrigerEvent(); 
+    delay(2000);
+  }
 
-    while(client.available()){
+      while(client.available()){
       String line = client.readStringUntil('\r');
       Serial.print(line);
     }
-    delay(2000);
-  }
 }
 
 void motionTrigerEvent(){
@@ -102,19 +101,17 @@ void motionTrigerEvent(){
 }
 
 void sendMotionData(){
-    // Use WiFiClient class to create TCP connections
-  //WiFiClient client;
   const int httpPort = 80;
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
     return;
   }
-    client.print("PUT " + String(url_GK) + " HTTP/1.1\r\n");
+    client.print("PUT /v1/things/d5b7ff9c6c3511e5accf2f3e5a24aa78/properties/f64c25bf6c3511e5accf2f3e5a24aa78/value.json HTTP/1.1\r\n");
     client.print("Host: " + String(host) + "\r\n");
     client.print("X-ApiKey: " + String(api_key) + "\r\n");
     client.print("Content-Type: application/json; charset=UTF-8\r\n");
     client.print("Cache-Control: no-cache\r\n");
-    client.print("Content-Length: 5\r\n");
+    client.print("Content-Length: 4\r\n");
     client.print("\ntrue\r\n");
     delay(100);
 }
@@ -122,8 +119,8 @@ void sendMotionData(){
 void getTimeDate(){
   WiFi.hostByName(ntpServerName, timeServerIP); 
 
-    sendNTPpacket(timeServerIP); // send an NTP packet to a time server
-  // wait to see if a reply is available
+  sendNTPpacket(timeServerIP); // send an NTP packet to a time server
+                                 // wait to see if a reply is available
   delay(1000);
   
   int cb = udp.parsePacket();
